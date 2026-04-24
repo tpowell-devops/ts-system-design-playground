@@ -9,5 +9,30 @@ services:
     volumes:
       - redis_data:/data
 
+  api:
+    env_file:
+      - ../.env
+    build:
+      context: ..
+      dockerfile: infra/api.Dockerfile
+    container_name: api
+    ports:
+    - "3000:3000"
+    depends_on:
+    - redis
+    environment:
+    - REDIS_URL=redis://redis:6379
+
+  worker:
+    env_file:
+      - ../.env
+    build:
+      context: ..
+      dockerfile: infra/worker.Dockerfile
+    container_name: worker
+    depends_on:
+    - redis
+    environment:
+    - REDIS_URL=redis://redis:6379
 volumes:
   redis_data:

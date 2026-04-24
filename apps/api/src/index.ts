@@ -1,20 +1,20 @@
 import express from "express";
 import { createClient } from "redis";
-import { Job, serializeJob, jobKey } from "@shared/job";
-
+import { Job, serializeJob, jobKey } from "@job-system/shared/";
+import { config } from "@job-system/shared";
+import "dotenv/config";
 
 const app = express();
 
 app.use(express.json());
 
-const redisUrl = "redis://localhost:6379";
 const QUEUE = "jobs";
-const RETRY_QUEUE = "jobs:retry";
-const DLQ = "jobs:dead";
-const MAX_RETRIES = 3;
+// const RETRY_QUEUE = "jobs:retry";
+// const DLQ = "jobs:dead";
+// const MAX_RETRIES = 3;
 
 const client = createClient({
-    url: redisUrl,
+    url: config.redisUrl,
 });
 
 client.connect();

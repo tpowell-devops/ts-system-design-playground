@@ -1,18 +1,19 @@
 import { createClient } from "redis";
-import { deserializeJob, jobKey } from "@shared/job";
+import { deserializeJob, jobKey } from "@job-system/shared/";
+import { config } from "@job-system/shared/";
+import "dotenv/config";
 
-const redisUrl = "redis://localhost:6379";
 const QUEUE = "jobs";
 const RETRY_QUEUE = "jobs:retry";
 const DLQ = "jobs:dead";
-const MAX_RETRIES = 3;
-const WORKER_ID = `worker-${process.pid}`;
-const VISIBILITY_TIMEOUT_MS = 10_000; // 10 seconds
+const MAX_RETRIES = config.maxRetries;
+const WORKER_ID = config.workerId;
+const VISIBILITY_TIMEOUT_MS = config.visibilityTimeout;
 const LOCK_TTL_SECONDS = 15;
 const LOCK_RENEW_INTERVAL_MS = 3000;
 
 const client = createClient({
-    url: redisUrl,
+    url: config.redisUrl,
 });
 
 function sleep(ms: number) {

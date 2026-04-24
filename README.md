@@ -139,8 +139,8 @@ Initial version uses [describe your choice: in-memory / Redis / DB-backed].
 * Frontend: React
 * Backend: Node.js
 * Database: PostgreSQL
-* Queue: (your choice)
-* Cache (optional): Redis
+* Queue/Cache: Redis
+
 
 ---
 
