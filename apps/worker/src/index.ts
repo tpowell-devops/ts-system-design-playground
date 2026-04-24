@@ -1,7 +1,7 @@
+import "dotenv/config";
 import { createClient } from "redis";
 import { deserializeJob, jobKey } from "@job-system/shared/";
 import { config } from "@job-system/shared/";
-import "dotenv/config";
 
 const QUEUE = "jobs";
 const RETRY_QUEUE = "jobs:retry";
@@ -73,7 +73,7 @@ async function startWorker() {
             const key = jobKey(jobId);
             // const job = JSON.parse(result.element);
 
-            const jobRaw = await client.hGetAll(jobKey(jobId));
+            const jobRaw = await client.hGetAll(key);
             if (!jobRaw || !jobRaw.id) continue;
 
             // const job = {
