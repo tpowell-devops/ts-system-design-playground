@@ -42,6 +42,6 @@ export function deserializeJob(hash: Record<string, string>): Job {
     };
 }
 
-export function jobKey(id: number) {
+export function jobKey(id: string | number) {
     return `job:${id}`;
 }

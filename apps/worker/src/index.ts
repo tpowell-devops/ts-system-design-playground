@@ -1,7 +1,6 @@
 import "dotenv/config";
 import { createClient } from "redis";
-import { deserializeJob, jobKey } from "@job-system/shared/";
-import { config } from "@job-system/shared/";
+import { deserializeJob, jobKey, config } from "@job-system/shared";
 
 const QUEUE = "jobs";
 const RETRY_QUEUE = "jobs:retry";
@@ -281,16 +280,34 @@ async function startLockRenewal(client: any, jobId: number, workerId: string) {
 
     const interval = setInterval(async () => {
         try {
-            const currentOwner = await client.get(key);
+            const script = `
+                if redis.call("GET", KEYS[1]) == ARGV[1] then
+                    return redis.call("EXPIRE", KEYS[1], ARGV[2])
+                else
+                    return 0
+                end
+               `;
 
-            // Only renew if we still own it
-            if (currentOwner === workerId) {
-                await client.expire(key, LOCK_TTL_SECONDS);
-                console.log(`renewed lock for job ${jobId}`);
-            } else {
+            const result = await client.eval(script, {
+                keys: [key],
+                arguments: [workerId, String(LOCK_TTL_SECONDS)]
+            });
+
+            if (result === 0){
                 console.log(`lost lock for job ${jobId}`);
                 clearInterval(interval);
             }
+
+            // const currentOwner = await client.get(key); //gets data from Redis instance via network
+            //
+            // // Only renew if we still own it
+            // if (currentOwner === workerId) {
+            //     await client.expire(key, LOCK_TTL_SECONDS);
+            //     console.log(`renewed lock for job ${jobId}`);
+            // } else {
+            //     console.log(`lost lock for job ${jobId}`);
+            //     clearInterval(interval);
+            // }
         } catch (err) {
             console.error("renewal error:", err);
             clearInterval(interval);

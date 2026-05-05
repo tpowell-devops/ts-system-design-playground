@@ -1,0 +1,9 @@
+.idea
+ts-system-design-playground.iml
+aaps/frontend
+dist/
+node_modules/
+*.tsbuildinfo
+.env
+apps/frontend/src/assets
+apps/frontend/public

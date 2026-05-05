@@ -1,0 +1,12 @@
+{
+  "name": "ts-system-design-playground",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "docker compose up"
+  }
+}

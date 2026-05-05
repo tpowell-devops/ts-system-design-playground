@@ -1,9 +1,25 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "declaration": true
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "composite": true
   },
   "include": ["src"]
 }
+
+//{
+//  "extends": "../../tsconfig.base.json",
+//  "compilerOptions": {
+//    "target": "ES2020",
+//    "strict": true,
+//    "esModuleInterop": true,
+//    "skipLibCheck": true,
+//  },
+//  "include": ["src"]
+//}

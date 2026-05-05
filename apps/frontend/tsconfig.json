@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "jsx": "react-jsx",           // Enables JSX without import React
+    "moduleResolution": "Node",
+    "strict": true,
+    "esModuleInterop": true,      // Fixes default import issues
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",               // helpful for absolute imports if needed
+    "paths": {
+      "@/*": ["src/*"],
+      "@shared/*": ["../../packages/shared/*"]  // optional: maps shared types
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

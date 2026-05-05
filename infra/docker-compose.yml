@@ -11,7 +11,7 @@ services:
 
   api:
     env_file:
-      - ../.env
+      - ../.env.docker
     build:
       context: ..
       dockerfile: infra/api.Dockerfile
@@ -25,7 +25,7 @@ services:
 
   worker:
     env_file:
-      - ../.env
+    - ../.env.docker
     build:
       context: ..
       dockerfile: infra/worker.Dockerfile
@@ -34,5 +34,25 @@ services:
     - redis
     environment:
     - REDIS_URL=redis://redis:6379
+
+  frontend:
+    env_file:
+    - ../.env.docker
+    build:
+      context: ..
+      dockerfile: infra/frontend.Dockerfile
+    container_name: UI
+    ports:
+    - "3001:80"
+    depends_on:
+    - api
+    environment:
+    - REDIS_URL=redis://redis:6379
+#    Axios baseURL: 'http://api:3000' (in http.ts)
+#    The frontend in the browser would try to contact api hostname directly from the browser, which is not routable from the host machine — it only exists in Docker internal network
+#    Only works if the browser is inside the same Docker network (e.g., another container)
+#    Otherwise, the browser can't resolve api:3000 → CORS errors, failed requests
+#
+#    ✅ So in practice, use /api for the browser + Nginx proxy, and http://api:3000 only for server-side code inside containers.
 volumes:
   redis_data:
