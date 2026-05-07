@@ -1,0 +1,35 @@
+@startuml
+
+title Advanced Job State Machine (Retries + DLQ + Idempotency)
+
+[*] --> Created
+
+Created --> Queued
+
+Queued --> Processing
+
+Processing --> Completed
+
+Processing --> Failed : exception/error
+
+Failed --> Processing : retry if retryCount < maxRetries
+
+Failed --> DeadLetterQueue : retryCount >= maxRetries
+
+DeadLetterQueue --> ManualIntervention
+
+Completed --> [*]
+DeadLetterQueue --> [*]
+
+note right of Processing
+Idempotent execution ensured:
+- duplicate-safe processing
+- safe retry semantics
+end note
+
+note right of Failed
+Exponential backoff applied:
+delay = base * 2^retryCount
+end note
+
+@enduml

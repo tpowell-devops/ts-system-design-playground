@@ -1,0 +1,38 @@
+@startuml
+
+title Deployment Diagram - Full Stack System
+
+node "Client Machine" {
+    artifact "Browser"
+}
+
+node "Docker Network" {
+
+    node "nginx Container" as nginx {
+        artifact "Reverse Proxy"
+    }
+
+    node "Frontend Container" as frontend {
+        artifact "React SPA\n(Vite build output)"
+    }
+
+    node "API Container" as api {
+        artifact "Node.js + Express API"
+    }
+
+    node "Redis Container" as redis {
+        artifact "In-Memory Store\nQueues + State + DLQ"
+    }
+}
+
+' --- External access ---
+Browser --> nginx : HTTPS
+
+' --- nginx routing ---
+nginx --> frontend : "/" (static assets)
+nginx --> api : "/api/*" reverse proxy
+
+' --- backend dependencies ---
+api --> redis : queue ops\nstate storage\nretry tracking
+
+@enduml

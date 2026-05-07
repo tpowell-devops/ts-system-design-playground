@@ -1,0 +1,86 @@
+@startuml
+
+title End-to-End Request Lifecycle (Auth + API + Job System)
+
+actor User
+
+participant "React UI" as UI
+participant "React Query" as RQ
+participant "Axios http.ts" as AX
+participant "Axios Interceptor" as INT
+participant "AuthProvider" as AUTH
+participant "authStore (memory)" as STORE
+participant "nginx" as NGINX
+participant "API (Express)" as API
+database "Redis (Queue + State)" as REDIS
+participant "Worker Process" as WORKER
+database "HttpOnly Cookie\n(refresh token)" as COOKIE
+
+' =========================
+' 1. AUTHENTICATED REQUEST
+' =========================
+
+User -> UI : Create Job action
+UI -> RQ : useMutation(createJob)
+RQ -> AX : POST /api/job
+
+AX -> INT : request interceptor
+INT -> STORE : get access token
+
+alt token exists
+    INT -> AX : attach Authorization header
+end
+
+AX -> NGINX : request
+NGINX -> API : proxy request
+
+API -> API : validate JWT access token
+
+API -> REDIS : enqueue job (PENDING)
+API --> AX : { jobId, status: "QUEUED" }
+
+AX --> RQ : response
+RQ --> UI : job created UI update
+
+' =========================
+' 2. ASYNC JOB PROCESSING
+' =========================
+
+REDIS -> WORKER : job available
+
+WORKER -> WORKER : process job
+
+alt success
+    WORKER -> REDIS : mark COMPLETED
+else failure
+    WORKER -> REDIS : increment retryCount
+    WORKER -> REDIS : requeue OR move to DLQ
+end
+
+' =========================
+' 3. OPTIONAL STATUS POLLING
+' =========================
+
+UI -> RQ : poll /jobs/{id}
+RQ -> AX : GET job status
+AX -> NGINX
+NGINX -> API
+API -> REDIS : fetch job state
+REDIS --> API : status
+API --> AX : status response
+AX --> UI : updated state
+
+' =========================
+' 4. TOKEN EXPIRATION FLOW
+' =========================
+
+AX --> INT : 401 Unauthorized
+
+INT -> COOKIE : POST /auth/refresh
+API -> COOKIE : validate refresh token
+API --> INT : new access token
+
+INT -> STORE : update token
+INT -> AX : retry original request
+
+@enduml

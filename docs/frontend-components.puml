@@ -1,0 +1,62 @@
+@startuml
+
+title Frontend Component Architecture
+
+package "Entry Layer" {
+    [main.tsx]
+    [App.tsx]
+}
+
+package "Routing Layer" {
+    [React Router]
+    [ProtectedRoute]
+}
+
+package "Auth Feature" {
+    [Login.tsx]
+    [AuthProvider]
+    [useAuth hook]
+    [authStore (memory)]
+}
+
+package "Jobs Feature" {
+    [JobsPage]
+    [useJobs]
+    [jobs.api.ts]
+}
+
+package "State Management" {
+    [React Query]
+}
+
+package "API Layer" {
+    [http.ts (Axios Instance)]
+    [Axios Interceptors]
+}
+
+' --- Composition ---
+[main.tsx] --> [AuthProvider]
+[main.tsx] --> [React Router]
+[main.tsx] --> [React Query]
+
+[React Router] --> [App.tsx]
+[App.tsx] --> [ProtectedRoute]
+[App.tsx] --> [Login.tsx]
+[App.tsx] --> [JobsPage]
+
+[Login.tsx] --> [React Query]
+[JobsPage] --> [React Query]
+
+[React Query] --> [jobs.api.ts]
+[React Query] --> [auth.api.ts]
+
+[jobs.api.ts] --> [http.ts]
+[auth.api.ts] --> [http.ts]
+
+[http.ts] --> [Axios Interceptors]
+
+[Axios Interceptors] --> [authStore (memory)]
+[AuthProvider] --> [authStore (memory)]
+[AuthProvider] --> [useAuth hook]
+
+@enduml

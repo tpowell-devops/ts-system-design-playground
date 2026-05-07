@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import cookieParser from "cookie-parser";
 import { createClient } from "redis";
 import { Job, serializeJob, jobKey, config } from "@job-system/shared";
 import cors from 'cors';
@@ -8,6 +9,7 @@ import jwt from 'jsonwebtoken';
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 const allowedOrigins = [
     'http://localhost:3001',      // browser accessing frontend on host
@@ -19,10 +21,14 @@ app.use(cors({
     credentials: true,
 }));
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
-if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET is not defined");
+if (!JWT_ACCESS_SECRET) {
+    throw new Error("JWT_ACCESS_SECRET is not defined");
+}
+if (!JWT_REFRESH_SECRET) {
+    throw new Error("JWT_REFRESH_SECRET is not defined");
 }
 
 const QUEUE = "jobs";
@@ -65,17 +71,68 @@ app.post("/auth/login", async (req, res) => {
         });
     }
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
         {
             sub: username,
             role: "user"
         },
-        JWT_SECRET,
+        JWT_ACCESS_SECRET,
         {
-            expiresIn: "1h"
+            expiresIn: "15m"
         }
     );
-    res.json({ token });
+
+    const refreshToken = jwt.sign(
+        {
+            sub: username,
+        },
+        JWT_REFRESH_SECRET!,
+        {
+            expiresIn: "7d",
+        }
+    );
+
+
+    res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: false, // true in production HTTPS
+        sameSite: "strict",
+        path: "/auth/refresh",
+    });
+
+    res.json({ accessToken });
+});
+
+app.post("/auth/refresh", (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        return res.sendStatus(401);
+    }
+
+    try {
+        const payload = jwt.verify(
+            refreshToken,
+            process.env.JWT_REFRESH_SECRET!
+        ) as jwt.JwtPayload;
+
+        const accessToken = jwt.sign(
+            {
+                sub: payload.sub,
+                role: "user",
+            },
+            process.env.JWT_ACCESS_SECRET!,
+            {
+                expiresIn: "15m",
+            }
+        );
+
+        res.json({
+            accessToken,
+        });
+    } catch {
+        return res.sendStatus(403);
+    }
 });
 
 app.post("/job", async (req, res) => {

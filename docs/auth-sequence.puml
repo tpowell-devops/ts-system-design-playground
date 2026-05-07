@@ -1,0 +1,86 @@
+@startuml
+
+title Authentication Sequence Diagram (JWT + Refresh Token Flow)
+
+actor User
+
+participant "React UI\n(Login / App)" as UI
+participant "React Query" as RQ
+participant "Axios http.ts" as AX
+participant "Axios Interceptor" as INT
+participant "AuthProvider" as AUTH
+participant "authStore\n(memory)" as STORE
+participant "nginx" as NGINX
+participant "API (Express)" as API
+database "HTTP-only Cookie\n(refresh token)" as COOKIE
+
+' =========================
+' 1. LOGIN FLOW
+' =========================
+
+User -> UI : Enter credentials
+UI -> RQ : useMutation(login)
+RQ -> AX : POST /auth/login
+AX -> API : request (via nginx)
+
+API -> API : validate credentials
+API -> API : sign access + refresh JWT
+
+API -> COOKIE : set refresh token (HttpOnly)
+API --> AX : { accessToken }
+
+AX --> RQ : response
+RQ -> AUTH : login(accessToken)
+AUTH -> STORE : setToken(accessToken)
+
+' =========================
+' 2. AUTHENTICATED REQUEST
+' =========================
+
+User -> UI : Navigate / use app
+UI -> RQ : fetch jobs
+RQ -> AX : GET /api/jobs
+
+AX -> INT : request interceptor
+INT -> STORE : getToken()
+
+alt token exists
+    INT -> AX : attach Authorization header
+end
+
+AX -> NGINX : request
+NGINX -> API : proxy request
+API --> AX : response data
+AX --> RQ : result
+
+' =========================
+' 3. TOKEN EXPIRATION + REFRESH
+' =========================
+
+API --> AX : 401 Unauthorized
+
+AX -> INT : response interceptor
+
+alt token expired
+    INT -> API : POST /auth/refresh (cookie auto-sent)
+    API -> COOKIE : read refresh token
+    API -> API : verify refresh token
+    API -> API : issue new access token
+    API --> INT : new access token
+
+    INT -> STORE : setToken(new token)
+    INT -> AX : retry original request
+    AX -> API : retried request
+    API --> AX : success response
+end
+
+' =========================
+' 4. LOGOUT FLOW
+' =========================
+
+User -> UI : Logout click
+UI -> AUTH : logout()
+AUTH -> STORE : clearToken()
+AUTH -> UI : redirect to /login
+
+@enduml

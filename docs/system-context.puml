@@ -1,0 +1,25 @@
+@startuml
+
+title System Context Diagram
+
+actor User
+
+rectangle "Docker Network" {
+
+    node "nginx\nReverse Proxy" as nginx
+
+    node "Frontend SPA\nReact + TypeScript" as frontend
+
+    node "API Service\nExpress + JWT" as api
+
+    database "Redis\nQueue + State Store" as redis
+}
+
+User --> nginx : HTTPS Requests
+
+nginx --> frontend : Static Assets
+nginx --> api : Reverse Proxy\n/api/*
+
+api --> redis : Queue Operations\nJob State\nRetries\nDLQ
+
+@enduml

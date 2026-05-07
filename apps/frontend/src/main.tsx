@@ -6,6 +6,7 @@ import App from './app/App';
 
 // React Query setup: manages server state (API data) in a cache-friendly way
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {AuthProvider} from "./features/auth/context/AuthProvider";
 
 // 1️⃣ Create a QueryClient instance
 //    This object manages caching, background updates, and error handling for API data.
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         {/* 3️⃣ Wrap the app in QueryClientProvider so all components can use React Query */}
         <BrowserRouter>
             <QueryClientProvider client={queryClient}>
-                <App />
+                <AuthProvider>
+                    <App />
+                </AuthProvider>
             </QueryClientProvider>
         </BrowserRouter>
     </React.StrictMode>
