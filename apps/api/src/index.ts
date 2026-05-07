@@ -3,6 +3,7 @@ import express from "express";
 import { createClient } from "redis";
 import { Job, serializeJob, jobKey, config } from "@job-system/shared";
 import cors from 'cors';
+import jwt from 'jsonwebtoken';
 
 const app = express();
 
@@ -17,6 +18,12 @@ app.use(cors({
     origin: allowedOrigins, // frontend origin
     credentials: true,
 }));
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined");
+}
 
 const QUEUE = "jobs";
 // const RETRY_QUEUE = "jobs:retry";
@@ -47,6 +54,28 @@ function parseJob(raw: string): Job {
 
 app.get("/health", (_, res) => {
     res.json({status: "ok"});
+});
+
+app.post("/auth/login", async (req, res) => {
+    const { username, password } = req.body;
+    // Replace with real validation
+    if (username !== "authUser" || password !== "password") {
+        return res.status(401).json({
+            error: "Invalid credentials"
+        });
+    }
+
+    const token = jwt.sign(
+        {
+            sub: username,
+            role: "user"
+        },
+        JWT_SECRET,
+        {
+            expiresIn: "1h"
+        }
+    );
+    res.json({ token });
 });
 
 app.post("/job", async (req, res) => {

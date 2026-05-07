@@ -8,5 +8,12 @@
   "scripts": {
     "build": "tsc -b",
     "dev": "docker compose up"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10"
   }
 }

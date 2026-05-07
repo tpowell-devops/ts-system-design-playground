@@ -71,3 +71,9 @@ export default defineConfig([
   },
 ])
 ```
+
+FOR DEV DEMONSTRATION ONLY:
+Login Credentials
+
+User - 'authUser'
+Password - 'password'

@@ -15,6 +15,16 @@ export const http = axios.create({
     },
 });
 
+// Request interceptor to automatically attach the token
+http.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+export default http;
 // axios.get('/api/jobs')
 // export const http = axios.create({
 //     baseURL: 'http://localhost:3000', // your API service
